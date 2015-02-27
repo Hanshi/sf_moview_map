@@ -1,0 +1,60 @@
+head
+  style
+    include style.css
+  script(type='text/javascript' src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA5VCX-uvNmiwDAGnP_6ipwcP42z62gnHQ').
+  script(type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js').
+    var input_box_selected=false;
+    var text_so_far="";
+    function selectBox()
+    {
+      input_box_selected = true;
+    }
+    function deSelectBox()
+    {
+    input_vox_seleceted = false;
+    } 
+   
+    function keyDown()
+    {
+      var x = document.getElementById("inputMovieName").value;
+      console.log(x);
+    }
+  script(tyep='text/javascript').
+    $(document).ready(function() {
+      console.log("Yes Called");
+      // Construct the query string
+      url = 'http://data.ct.gov/resource/9k2y-kqxn.json?'
+          + 'organization_type=Public%20School%20Districts'
+          + '&$$app_token=CGxaHQoQlgQSev4zyUh5aR5J3';
+    
+      // Intialize our map
+      var center = new google.maps.LatLng(41.7656874,-72.680087);
+      var mapOptions = {
+        zoom: 8,
+        center: center
+      }
+      var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+    
+      // Retrieve our data and plot it
+      $.getJSON(url, function(data, textstatus) {
+          $.each(data, function(i, entry) {
+              console.log(entry)
+              var marker = new google.maps.Marker({
+                  position: new google.maps.LatLng(entry.location_1.latitude, 
+                                                   entry.location_1.longitude),
+                  map: map,
+                  title: location.name
+              });
+          });
+      });
+    });
+
+h1= title
+form#formSearch("movie search", method="post", action="/movie_search")
+    input#inputMovieName(type="text", placeholder="Movie Name", name="movie_name"
+                        ,onfocus="selectBox()"
+                        ,onblur="deSelectBox()"
+                        ,onkeydown="keyDown()")
+    button#btnSubmit(type="submit") submit
+p Welcome to #{title}
+div#map()
