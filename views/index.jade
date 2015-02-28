@@ -75,7 +75,7 @@ head
       // Retrieve movie data and create markers
       $.getJSON(url, function(data, textstatus) {
           $.each(data, function(i, entry) {
-              if(typeof entry.locations !== "undefined" && typeof entry.title !== "undefined" && i<100){
+              if(typeof entry.locations !== "undefined" && typeof entry.title !== "undefined"){
                   addresses.push(entry.locations);
                   var url_friendly_address =getUrlFriendlyString(entry.locations);
                   var geo_request_url = geocoding_http + url_friendly_address + api_key;
