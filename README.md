@@ -1,6 +1,7 @@
 # sf_moview_map
 
 Project Film Location Search in San Francisco
+
 This is my first Javascript project. During the last week I have learned a lot about Javascript, Nodejs, Jquery, Google Map API from scratch. Awesome!
 
 - Goal: Let user quickly search film locations by movie names. This server should be fast and responsive.
