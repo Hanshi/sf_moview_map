@@ -1,46 +1,115 @@
 head
   style
     include style.css
-  script(type='text/javascript' src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA5VCX-uvNmiwDAGnP_6ipwcP42z62gnHQ').
   script(type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js').
+  script(type='text/javascript' src='https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyA5VCX-uvNmiwDAGnP_6ipwcP42z62gnHQ').
   script(tyep='text/javascript').
-    function keyDown()
+    var user_input=''; // user input string in search box
+    var map; // google map object
+    var service; // googlme map service object
+    var map_markers = [];  // global variable to store (movie_name, marker) pair
+    var api_key='&key=AIzaSyA5VCX-uvNmiwDAGnP_6ipwcP42z62gnHQ';
+    var geocoding_http='https://maps.googleapis.com/maps/api/geocode/json?address=';
+
+    // Change street address to be part of a query URL
+    function getUrlFriendlyString(str)
     {
-      var x = document.getElementById("inputMovieName").value;
-      console.log(x);
+       // Convert spaces to '-'
+       var str_out = str.replace(/ /g, "-");
+       // Make lowercase
+       str_out = str_out.toLowerCase();
+       // Remove characters that are not alphanumeric or a '-'
+       str_out = str_out.replace(/[^a-z0-9-]/g, "");
+       // Combine multiple dashes (i.e., '---') into one dash '-'.
+       str_out = str_out.replace(/[-]+/g, "-");
+       return str_out;
     }
+
+    // Struct
+    function movie_marker(p_movie_name, p_marker)
+    {
+        this.m_movie_name = p_movie_name;
+        this.m_marker = p_marker;
+    }
+
+    // Search box key down callback
+    function keyDown(event)
+    {
+      var letter = String.fromCharCode(event.which);
+      if(event.which == 8){
+        // Backspace
+        user_input = user_input.substring(0, user_input.length-1);
+      }else{
+        // Otherwise
+        user_input += letter;
+      }
+  
+      user_input = user_input.toLowerCase();
+      console.log(user_input);
+      map_markers.forEach(function(k){
+        // Hide all markers first
+        k.m_marker.setVisible(false);
+        if(k.m_movie_name.toLowerCase().indexOf(user_input) > -1){
+          // Show qualified ones
+          k.m_marker.setVisible(true);
+        }
+      });
+    }
+
+
+    // Load map, load movie data base, search for coordinators in Google map
     $(document).ready(function() {
-      console.log("Yes Called");
-      // Construct the query string
-      url = 'http://data.ct.gov/resource/9k2y-kqxn.json?'
-          + 'organization_type=Public%20School%20Districts'
-          + '&$$app_token=CGxaHQoQlgQSev4zyUh5aR5J3';
-    
-      // Intialize our map
-      var center = new google.maps.LatLng(41.7656874,-72.680087);
+      // Intialize map
+      var center = new google.maps.LatLng(37.774929,-122.419416);
       var mapOptions = {
         zoom: 8,
         center: center
-      }
-      var map = new google.maps.Map(document.getElementById("map"), mapOptions);
-    
-      // Retrieve our data and plot it
+      };
+      map = new google.maps.Map(document.getElementById("map"), mapOptions);
+      service = new google.maps.places.PlacesService(map);
+      infowindow = new google.maps.InfoWindow();
+
+      // Construct the query string
+      url = 'http://data.sfgov.org/resource/yitu-d5am.json';
+      var addresses = [];
+      // Retrieve movie data and create markers
       $.getJSON(url, function(data, textstatus) {
           $.each(data, function(i, entry) {
-              var marker = new google.maps.Marker({
-                  position: new google.maps.LatLng(entry.location_1.latitude, 
-                                                   entry.location_1.longitude),
-                  map: map,
-                  title: location.name
-              });
+              if(typeof entry.locations !== "undefined" && typeof entry.title !== "undefined" && i<100){
+                  addresses.push(entry.locations);
+                  var url_friendly_address =getUrlFriendlyString(entry.locations);
+                  var geo_request_url = geocoding_http + url_friendly_address + api_key;
+                  $.getJSON(geo_request_url, function(geo_data, geo_textstatus){
+                      if (geo_data.status == 'OK'){
+                          map_markers.push(createMarker(geo_data.results[0], entry.title));
+                      }    
+                  });
+               }
           });
-      });
-    });
+      });//getJSON
+    
+
+      function createMarker(place, movie_name) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location
+        });
+        marker.setVisible(false);
+
+       google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(movie_name);
+          infowindow.open(map, this);
+        });
+        return new movie_marker(movie_name, marker);
+      }
+
+    }); // document.ready
+    
 
 h1= title
-form#formSearch("movie search", method="post", action="/movie_search")
+form#formSearch("movie search", method="post")
     input#inputMovieName(type="text", placeholder="Movie Name", name="movie_name"
-                        ,onkeydown="keyDown()")
-    button#btnSubmit(type="submit") submit
+                        ,onkeydown="keyDown(event)")
 p Welcome to #{title}
 div#map()
